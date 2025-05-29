@@ -12,6 +12,7 @@ const Home = () => {
     phone: "",
     address: "",
   });
+  const [editingContact, setEditingContact] = useState(null);
   useEffect(() => {
     const fetchAgendas = async () => {
       try {
@@ -35,6 +36,7 @@ const Home = () => {
   const handleAgendaChange = (e) => {
     const agenda = e.target.value;
     setSelectedAgenda(agenda);
+    localStorage.setItem("lastAgenda", agenda);
     actions.getContacts(agenda);
   };
   const handleCreateAgenda = async (e) => {
@@ -70,7 +72,6 @@ const Home = () => {
       return;
     }
     const contactoAEnviar = { ...form, agenda_slug: selectedAgenda };
-    console.log("Contacto que se enviará a la API:", contactoAEnviar);
     await actions.addContact(selectedAgenda, form);
     setForm({
       full_name: "",
@@ -147,26 +148,94 @@ const Home = () => {
         <button type="submit">Añadir contacto</button>
       </form>
       {state.contacts.length > 0 ? (
-  state.contacts.map((contact) => (
-    <div key={contact.id} style={{ display: "flex", alignItems: "center", gap: "1rem", border: "1px solid #ccc", marginBottom: "1rem", padding: "1rem" }}>
-      <img
-        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(contact.full_name || contact.name || "Contacto")}&background=random`}
-        alt="avatar"
-        width={48}
-        height={48}
-        style={{ borderRadius: "50%" }}
-      />
-      <div>
-        <h3>{contact.full_name || contact.name}</h3>
-        <p>Email: {contact.email}</p>
-        <p>Teléfono: {contact.phone}</p>
-        <p>Dirección: {contact.address}</p>
-      </div>
-    </div>
-  ))
-) : (
-  <p>No hay contactos disponibles.</p>
-)}
+        state.contacts.map((contact) => (
+          <div key={contact.id} style={{ display: "flex", alignItems: "center", gap: "1rem", border: "1px solid #ccc", marginBottom: "1rem", padding: "1rem" }}>
+            <img
+              src={`https://ui-avatars.com/api/?name=${encodeURIComponent(contact.full_name || contact.name || "Contacto")}&background=random`}
+              alt="avatar"
+              width={48}
+              height={48}
+              style={{ borderRadius: "50%" }}
+            />
+            <div>
+              <h3>{contact.full_name || contact.name}</h3>
+              <p>Email: {contact.email}</p>
+              <p>Teléfono: {contact.phone}</p>
+              <p>Dirección: {contact.address}</p>
+              <button
+                style={{ background: "#dc3545", marginTop: 8 }}
+                onClick={() => actions.deleteContact(selectedAgenda, contact.id)}
+              >
+                Eliminar
+              </button>
+              <button
+                style={{ background: "#ffc107", color: "#222", marginLeft: 8, marginTop: 8 }}
+                onClick={() => setEditingContact(contact)}
+              >
+                Editar
+              </button>
+              {editingContact && editingContact.id === contact.id && (
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    await actions.updateContact(
+                      selectedAgenda,
+                      editingContact.id,
+                      {
+                        ...editingContact,
+                        name: editingContact.full_name,
+                        agenda_slug: selectedAgenda,
+                      }
+                    );
+                    await actions.getContacts(selectedAgenda);
+                    setEditingContact(null);
+                  }}
+                  style={{ marginTop: "1rem", background: "#ffe", padding: "1rem", border: "1px solid #ccc" }}
+                >
+                  <input
+                    type="text"
+                    name="full_name"
+                    placeholder="Nombre completo"
+                    value={editingContact.full_name}
+                    onChange={e => setEditingContact({ ...editingContact, full_name: e.target.value })}
+                    required
+                  />
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="Correo electrónico"
+                    value={editingContact.email}
+                    onChange={e => setEditingContact({ ...editingContact, email: e.target.value })}
+                    required
+                  />
+                  <input
+                    type="text"
+                    name="phone"
+                    placeholder="Teléfono"
+                    value={editingContact.phone}
+                    onChange={e => setEditingContact({ ...editingContact, phone: e.target.value })}
+                    required
+                  />
+                  <input
+                    type="text"
+                    name="address"
+                    placeholder="Dirección"
+                    value={editingContact.address}
+                    onChange={e => setEditingContact({ ...editingContact, address: e.target.value })}
+                    required
+                  />
+                  <button type="submit">Guardar cambios</button>
+                  <button type="button" onClick={() => setEditingContact(null)} style={{ marginLeft: 8 }}>
+                    Cancelar
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>
+        ))
+      ) : (
+        <p>No hay contactos disponibles.</p>
+      )}
     </div>
   );
 };

@@ -56,18 +56,27 @@ const StoreProvider = ({ children }) => {
 };
 
   const updateContact = async (agendaName, contactId, contactData) => {
-    try {
-      const response = await fetch(`https://playground.4geeks.com/contact/agendas/${agendaName}/contacts/${contactId}`, {
+  try {
+    const contactoAEnviar = {
+      ...contactData,
+      name: contactData.full_name,
+      agenda_slug: agendaName,
+    };
+    const response = await fetch(
+      `https://playground.4geeks.com/contact/agendas/${agendaName}/contacts/${contactId}`,
+      {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(contactData),
-      });
-      if (!response.ok) throw new Error(`Error en la API: ${response.status} ${response.statusText}`);
-      await getContacts(agendaName);
-    } catch (error) {
-      console.error("Error al actualizar contacto:", error);
-    }
-  };
+        body: JSON.stringify(contactoAEnviar),
+      }
+    );
+    const respuestaTexto = await response.text();
+    console.log("Respuesta de la API al actualizar:", respuestaTexto);
+    if (!response.ok) throw new Error(`Error en la API: ${response.status} ${response.statusText}`);
+  } catch (error) {
+    console.error("Error al actualizar contacto:", error);
+  }
+};
 
   const deleteContact = async (agendaName, contactId) => {
     try {
